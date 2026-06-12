@@ -7174,6 +7174,9 @@ class TartubeApp(Gtk.Application):
                 or options_obj != self.general_options_obj
             ):
                 options_obj_list.append(options_obj)
+        for opt in options_obj_list:
+            if hasattr(opt, 'verify_options_dict'):
+                opt.verify_options_dict()
 
         options_media_list = []
         for media_data_obj in self.media_reg_dict.values():
@@ -8705,14 +8708,12 @@ class TartubeApp(Gtk.Application):
             # This version adds new options to options.OptionsManager, set
             #   using the values of the deprecated TartubeApp IVs
             for options_obj in options_obj_list:
-
                 options_obj.options_dict['check_fetch_comments'] = \
-                getattr(self, 'check_comment_fetch_flag', False)
+                self.check_comment_fetch_flag
                 options_obj.options_dict['dl_fetch_comments'] = \
-                getattr(self, 'dl_comment_fetch_flag', False)
+                self.dl_comment_fetch_flag
                 options_obj.options_dict['store_comments_in_db'] = \
-                getattr(self, 'comment_store_flag', False)
-
+                self.comment_store_flag
 
         if version < 2005175:       # v2.5.175
 

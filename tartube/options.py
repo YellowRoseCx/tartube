@@ -656,6 +656,14 @@ class OptionsManager(object):
     # Standard class methods
 
 
+
+    def verify_options_dict(self):
+        """Ensures all default keys exist in options_dict so we don't get KeyErrors."""
+        dummy_options = OptionsManager(0, 'dummy')
+        dummy_options.reset_options()
+        for key, val in dummy_options.options_dict.items():
+            if key not in self.options_dict:
+                self.options_dict[key] = val
     def __init__(self, uid, name, dbid=None):
 
         # IV list - other
