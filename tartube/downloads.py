@@ -4485,10 +4485,10 @@ class VideoDownloader(object):
 
             if (
                 self.dl_sim_flag \
-                and options_obj.options_dict['check_fetch_comments']
+                and options_obj.options_dict.get('check_fetch_comments', False)
             ) or (
                 not self.dl_sim_flag \
-                and options_obj.options_dict['dl_fetch_comments']
+                and options_obj.options_dict.get('dl_fetch_comments', False)
             ):
                 wait_secs = app_obj.json_timeout_with_comments_time * 60
             else:
@@ -4750,7 +4750,7 @@ class VideoDownloader(object):
                 video_obj.set_was_live_flag(True)
 
             if comment_list \
-            and options_obj.options_dict['store_comments_in_db']:
+            and options_obj.options_dict.get('store_comments_in_db', False):
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \
@@ -4888,7 +4888,7 @@ class VideoDownloader(object):
 
             if not video_obj.comment_list \
             and comment_list \
-            and options_obj.options_dict['store_comments_in_db']:
+            and options_obj.options_dict.get('store_comments_in_db', False):
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \
