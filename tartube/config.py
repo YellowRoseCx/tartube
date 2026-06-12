@@ -1413,7 +1413,7 @@ class GenericEditWin(GenericConfigWin):
         self.show_all()
 
 
-    def retrieve_val(self, name):
+    def retrieve_val(self, name, default=None):
 
         """Can be called by anything.
 
@@ -4673,7 +4673,7 @@ class OptionsEditWin(GenericEditWin):
             dropzone_obj.update_widgets()
 
 
-    def retrieve_val(self, name):
+    def retrieve_val(self, name, default=None):
 
         """Can be called by anything.
 
@@ -4716,6 +4716,10 @@ class OptionsEditWin(GenericEditWin):
                 return value.copy()
             else:
                 return value
+
+        elif default is not None:
+
+            return default
 
         else:
 
@@ -5316,7 +5320,7 @@ class OptionsEditWin(GenericEditWin):
             0, 1, 1, 1,
         )
         # (Signal connect appears below)
-        checkbutton.set_active(self.retrieve_val('check_fetch_comments'))
+        checkbutton.set_active(self.retrieve_val('check_fetch_comments', False))
         self.add_tooltip('--write-comments', checkbutton)
 
         checkbutton2 = self.add_checkbutton(grid,
@@ -5325,7 +5329,7 @@ class OptionsEditWin(GenericEditWin):
             0, 2, 1, 1,
         )
         # (Signal connect appears below)
-        checkbutton2.set_active(self.retrieve_val('dl_fetch_comments'))
+        checkbutton2.set_active(self.retrieve_val('dl_fetch_comments', False))
         self.add_tooltip('--write-comments', checkbutton2)
 
         self.add_label(grid,
@@ -9274,7 +9278,7 @@ class OptionsEditWin(GenericEditWin):
 
         else:
             self.edit_dict['check_fetch_comments'] = False
-            if not self.retrieve_val('dl_fetch_comments'):
+            if not self.retrieve_val('dl_fetch_comments', False):
                 checkbutton2.set_active(False)
                 checkbutton2.set_sensitive(False)
 
@@ -9562,7 +9566,7 @@ class OptionsEditWin(GenericEditWin):
 
         else:
             self.edit_dict['dl_fetch_comments'] = False
-            if not self.retrieve_val('check_fetch_comments'):
+            if not self.retrieve_val('check_fetch_comments', False):
                 checkbutton2.set_active(False)
                 checkbutton2.set_sensitive(False)
 
@@ -11196,7 +11200,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 )
 
 
-    def retrieve_val(self, name):
+    def retrieve_val(self, name, default=None):
 
         """Can be called by anything.
 
@@ -11236,6 +11240,10 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 return value.copy()
             else:
                 return value
+
+        elif default is not None:
+
+            return default
 
         else:
 
