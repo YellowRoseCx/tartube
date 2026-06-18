@@ -19255,7 +19255,8 @@ class MainWin(Gtk.ApplicationWindow):
                         media_data_obj.set_dl_flag(False)
 
         # Temporarily block usage of the archive file
-        self.app_obj.set_block_ytdl_archive_flag(True)
+        if response == Gtk.ResponseType.NO:
+            self.app_obj.set_block_ytdl_archive_flag(True)
 
         if download_manager_obj:
 
@@ -20690,12 +20691,17 @@ class MainWin(Gtk.ApplicationWindow):
                 else:
                     media_data_obj.set_dl_flag(False)
 
+            # Since the user wants to KEEP existing formats and only download new ones,
+            # we must NOT block the ytdl archive file, otherwise it relies purely on filename checking.
+            pass
+
         # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl will
         #   have created a ytdl_archive.txt, recording every video ever
         #   downloaded in the parent directory. This will prevent a successful
         #   re-downloading of the video
-        # Temporarily block usage of the archive file
-        self.app_obj.set_block_ytdl_archive_flag(True)
+        # Temporarily block usage of the archive file only if replacing
+        if response == Gtk.ResponseType.NO:
+            self.app_obj.set_block_ytdl_archive_flag(True)
 
         # Now we're ready to start the download operation
         self.app_obj.download_manager_start('real', False, [media_data_obj] )
@@ -41890,7 +41896,6 @@ class TidyDialogue(Gtk.Dialog):
         if not mainapp.HAVE_MOVIEPY_FLAG \
         or self.main_win_obj.app_obj.refresh_moviepy_timeout == 0:
             self.checkbutton.set_sensitive(False)
-            self.checkbutton2.set_sensitive(False)
 
         self.checkbutton3 = Gtk.CheckButton()
         grid.attach(self.checkbutton3, 0, 2, 1, 1)

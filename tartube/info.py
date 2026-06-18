@@ -240,7 +240,7 @@ class InfoManager(threading.Thread):
 
             options_obj = self.app_obj.general_options_obj
             options_list = ttutils.parse_options(
-                options_obj.options_dict['fetch_formats_cmd_string'],
+                options_obj.options_dict.get('fetch_formats_cmd_string', ''),
             )
 
             cmd_list = [ytdl_path] + options_list + ['--list-formats'] \
@@ -250,7 +250,7 @@ class InfoManager(threading.Thread):
 
             options_obj = self.app_obj.general_options_obj
             options_list = ttutils.parse_options(
-                options_obj.options_dict['fetch_subtitles_cmd_string'],
+                options_obj.options_dict.get('fetch_subtitles_cmd_string', ''),
             )
 
             cmd_list = [ytdl_path] + options_list + ['--list-subs'] \

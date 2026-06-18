@@ -8705,12 +8705,14 @@ class TartubeApp(Gtk.Application):
             # This version adds new options to options.OptionsManager, set
             #   using the values of the deprecated TartubeApp IVs
             for options_obj in options_obj_list:
+
                 options_obj.options_dict['check_fetch_comments'] = \
-                self.check_comment_fetch_flag
+                getattr(self, 'check_comment_fetch_flag', False)
                 options_obj.options_dict['dl_fetch_comments'] = \
-                self.dl_comment_fetch_flag
+                getattr(self, 'dl_comment_fetch_flag', False)
                 options_obj.options_dict['store_comments_in_db'] = \
-                self.comment_store_flag
+                getattr(self, 'comment_store_flag', False)
+
 
         if version < 2005175:       # v2.5.175
 

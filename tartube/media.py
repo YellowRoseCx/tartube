@@ -3214,6 +3214,8 @@ class Video(GenericMedia):
 
             ext (str): The extension, e.g. 'png' or '.png'
 
+        if self.file_name is None:
+            return None
         Return values:
 
             The full file path (the file may or may not exist)
@@ -3252,6 +3254,8 @@ class Video(GenericMedia):
             ext (str): The extension, e.g. 'png' or '.png'
 
         Return values:
+        if self.file_name is None:
+            return None
 
             The full file path (the file may or may not exist)
 

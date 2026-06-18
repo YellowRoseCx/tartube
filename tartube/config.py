@@ -4716,9 +4716,7 @@ class OptionsEditWin(GenericEditWin):
                 return value.copy()
             else:
                 return value
-
         elif default is not None:
-
             return default
 
         else:
@@ -11240,9 +11238,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 return value.copy()
             else:
                 return value
-
         elif default is not None:
-
             return default
 
         else:
