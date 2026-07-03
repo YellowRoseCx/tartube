@@ -8705,14 +8705,12 @@ class TartubeApp(Gtk.Application):
             # This version adds new options to options.OptionsManager, set
             #   using the values of the deprecated TartubeApp IVs
             for options_obj in options_obj_list:
-
                 options_obj.options_dict['check_fetch_comments'] = \
-                getattr(self, 'check_comment_fetch_flag', False)
+                self.check_comment_fetch_flag
                 options_obj.options_dict['dl_fetch_comments'] = \
-                getattr(self, 'dl_comment_fetch_flag', False)
+                self.dl_comment_fetch_flag
                 options_obj.options_dict['store_comments_in_db'] = \
-                getattr(self, 'comment_store_flag', False)
-
+                self.comment_store_flag
 
         if version < 2005175:       # v2.5.175
 
@@ -8731,6 +8729,14 @@ class TartubeApp(Gtk.Application):
             for media_data_obj in self.media_reg_dict.values():
                 if isinstance(media_data_obj, media.Video):
                     media_data_obj.author = None
+
+        if version < 2005300:       # new db version
+
+            # This version adds a downloaded_formats IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    if not hasattr(media_data_obj, 'downloaded_formats'):
+                        media_data_obj.downloaded_formats = []
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -14835,6 +14841,53 @@ class TartubeApp(Gtk.Application):
                 video_obj.extract_subs_list(json_dict['subtitles'])
             else:
                 video_obj.reset_subs_list()
+
+            if 'format_id' in json_dict:
+                formats = str(json_dict['format_id']).split('+')
+                if not hasattr(video_obj, 'downloaded_formats'):
+                    video_obj.downloaded_formats = []
+
+                # We need to track bitrates too if we want to allow re-downloading identical format IDs with higher bitrates.
+                # json_dict['formats'] contains a list of all available formats.
+                # We'll map format_id to its bitrate (tbr or vbr + abr)
+                format_bitrates = {}
+                for f in json_dict.get('formats', []):
+                    fid = str(f.get('format_id'))
+                    # safely parse tbr, vbr, abr since they can be None or missing
+                    tbr = f.get('tbr')
+                    vbr = f.get('vbr')
+                    abr = f.get('abr')
+                    tbr = float(tbr) if tbr is not None else 0.0
+                    vbr = float(vbr) if vbr is not None else 0.0
+                    abr = float(abr) if abr is not None else 0.0
+                    bitrate = tbr or (vbr + abr)
+                    format_bitrates[fid] = bitrate
+
+                for fmt in formats:
+                    new_bitrate = format_bitrates.get(fmt, 0)
+
+                    # Check if we already have this format downloaded
+                    existing_entry = None
+                    for existing in video_obj.downloaded_formats:
+                        if isinstance(existing, dict) and existing.get('id') == fmt:
+                            existing_entry = existing
+                            break
+                        elif isinstance(existing, str) and existing == fmt:
+                            existing_entry = existing
+                            break
+
+                    if existing_entry is None:
+                        # Never downloaded before
+                        video_obj.downloaded_formats.append({'id': fmt, 'bitrate': new_bitrate})
+                    else:
+                        # Already downloaded, update bitrate if higher
+                        if isinstance(existing_entry, dict):
+                            if new_bitrate > existing_entry.get('bitrate', 0):
+                                existing_entry['bitrate'] = new_bitrate
+                        else:
+                            # Migrate old string to dict
+                            video_obj.downloaded_formats.remove(existing_entry)
+                            video_obj.downloaded_formats.append({'id': fmt, 'bitrate': new_bitrate})
 
             self.extract_parent_name_from_metadata(video_obj, json_dict)
 

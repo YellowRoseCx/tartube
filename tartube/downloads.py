@@ -3645,10 +3645,115 @@ class VideoDownloader(object):
                 divert_mode \
                 = self.download_manager_obj.custom_dl_obj.divert_mode
 
+
+            import subprocess
+            import json
+            import copy
+
+            # Check if we are re-downloading and 'Keep existing files' is selected
+            # We know this if media is a Video, it has downloaded_formats, and the archive is *NOT* blocked
+            media_obj = self.download_item_obj.media_data_obj
+            modified_options_list = copy.deepcopy(self.download_worker_obj.options_list)
+
+            if isinstance(media_obj, media.Video) and hasattr(media_obj, 'downloaded_formats') and len(media_obj.downloaded_formats) > 0 and self.dl_classic_flag == False and not self.dl_sim_flag:
+                # Construct a custom format string that excludes downloaded formats
+                # We do this by running yt-dlp -J to get the current formats and their bitrates,
+                # and comparing them against our stored bitrates.
+
+                # Include auth/cookie args for the -J dump command
+                # Include auth/cookie args for the -J dump command
+                # Safely fallback to video URL if media_obj.source is missing or None
+                video_url = getattr(media_obj, 'source', None) or media_obj.get_url()
+                dump_cmd = [app_obj.ytdl_path, '-J', video_url]
+
+                # Copy authentication-related arguments
+                skip_next = False
+                for arg_idx, arg in enumerate(modified_options_list):
+                    if skip_next:
+                        skip_next = False
+                        continue
+                    if arg.startswith('--cookies') or arg == '--username' or arg == '--password' or arg == '--proxy':
+                        dump_cmd.append(arg)
+                        if not arg.startswith('--cookies=') and arg_idx + 1 < len(modified_options_list):
+                            dump_cmd.append(modified_options_list[arg_idx + 1])
+                            skip_next = True
+                try:
+                    proc = subprocess.Popen(dump_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    stdout, stderr = proc.communicate(timeout=15)
+                    video_info = json.loads(stdout)
+
+                    available_formats = video_info.get('formats', [])
+                    format_bitrates = {}
+                    for f in available_formats:
+                        fid = str(f.get('format_id'))
+                        tbr = f.get('tbr')
+                        vbr = f.get('vbr')
+                        abr = f.get('abr')
+                        tbr = float(tbr) if tbr is not None else 0.0
+                        vbr = float(vbr) if vbr is not None else 0.0
+                        abr = float(abr) if abr is not None else 0.0
+                        bitrate = tbr or (vbr + abr)
+                        format_bitrates[fid] = bitrate
+
+                    downloaded_ids_to_exclude = set()
+                    exclusion_str = ""
+
+                    for existing in media_obj.downloaded_formats:
+                        if isinstance(existing, dict):
+                            fid = existing.get('id')
+                            stored_bitrate = existing.get('bitrate', 0)
+                            current_bitrate = format_bitrates.get(fid, 0)
+
+                            # Exclude if the current bitrate is NOT greater than what we already have
+                            if current_bitrate <= stored_bitrate:
+                                downloaded_ids_to_exclude.add(fid)
+                        elif isinstance(existing, str):
+                            # Legacy format, just exclude it
+                            downloaded_ids_to_exclude.add(existing)
+
+                    if downloaded_ids_to_exclude:
+                        exclusion_str = "".join([f"[format_id!={fid}]" for fid in downloaded_ids_to_exclude])
+
+                        # Find if there's an existing -f arg
+                        format_idx = -1
+                        if '-f' in modified_options_list:
+                            format_idx = modified_options_list.index('-f')
+                        elif '--format' in modified_options_list:
+                            format_idx = modified_options_list.index('--format')
+
+                        if format_idx != -1 and format_idx + 1 < len(modified_options_list):
+                            existing_format = modified_options_list[format_idx + 1]
+
+                            # Format comma separated
+                            new_comma_parts = []
+                            for comma_part in existing_format.split(','):
+                                new_slash_parts = []
+                                for slash_part in comma_part.split('/'):
+                                    new_plus_parts = []
+                                    for plus_part in slash_part.split('+'):
+                                        # Fix brackets for yt-dlp: if there's already a bracket, insert into it
+                                        if ']' in plus_part:
+                                            # Remove outer brackets from exclusion string to make it comma separated for insertion inside existing bracket
+                                            inner_exclusion = exclusion_str.replace('][', ',').replace('[', '').replace(']', '')
+                                            # insert it right before the last bracket
+                                            idx = plus_part.rfind(']')
+                                            new_part = plus_part[:idx] + ',' + inner_exclusion + plus_part[idx:]
+                                        else:
+                                            new_part = f"{plus_part}{exclusion_str}"
+                                        new_plus_parts.append(new_part)
+                                    new_slash_parts.append("+".join(new_plus_parts))
+                                new_comma_parts.append("/".join(new_slash_parts))
+
+                            modified_options_list[format_idx + 1] = ",".join(new_comma_parts)
+                        else:
+                            modified_options_list.extend(['-f', f"bestvideo{exclusion_str}+bestaudio{exclusion_str}/best{exclusion_str}"])
+                except Exception as e:
+                    print(f"Failed to fetch format info for deduplication: {e}")
+
             cmd_list = ttutils.generate_ytdl_system_cmd(
                 app_obj,
                 self.download_item_obj.media_data_obj,
-                self.download_worker_obj.options_list,
+                modified_options_list,
                 self.dl_sim_flag,
                 self.dl_classic_flag,
                 self.missing_video_check_flag,
@@ -4485,10 +4590,10 @@ class VideoDownloader(object):
 
             if (
                 self.dl_sim_flag \
-                and options_obj.options_dict.get('check_fetch_comments', False)
+                and options_obj.options_dict['check_fetch_comments']
             ) or (
                 not self.dl_sim_flag \
-                and options_obj.options_dict.get('dl_fetch_comments', False)
+                and options_obj.options_dict['dl_fetch_comments']
             ):
                 wait_secs = app_obj.json_timeout_with_comments_time * 60
             else:
@@ -4750,7 +4855,7 @@ class VideoDownloader(object):
                 video_obj.set_was_live_flag(True)
 
             if comment_list \
-            and options_obj.options_dict.get('store_comments_in_db', False):
+            and options_obj.options_dict['store_comments_in_db']:
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \
@@ -4888,7 +4993,7 @@ class VideoDownloader(object):
 
             if not video_obj.comment_list \
             and comment_list \
-            and options_obj.options_dict.get('store_comments_in_db', False):
+            and options_obj.options_dict['store_comments_in_db']:
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \

@@ -2025,6 +2025,9 @@ class Video(GenericMedia):
         #   'en_US', 'live_chat')
         self.subs_list = []
 
+        # List of successfully downloaded format IDs (e.g. [{'id': '137', 'bitrate': 2345}, ...])
+        self.downloaded_formats = []
+
         # List of timestamps, extracted from the video's description and/or
         #   metadata, or added manually by the user
         # List in groups of three, in the form
@@ -3214,8 +3217,6 @@ class Video(GenericMedia):
 
             ext (str): The extension, e.g. 'png' or '.png'
 
-        if self.file_name is None:
-            return None
         Return values:
 
             The full file path (the file may or may not exist)
@@ -3254,8 +3255,6 @@ class Video(GenericMedia):
             ext (str): The extension, e.g. 'png' or '.png'
 
         Return values:
-        if self.file_name is None:
-            return None
 
             The full file path (the file may or may not exist)
 

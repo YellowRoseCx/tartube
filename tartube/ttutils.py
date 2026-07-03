@@ -970,13 +970,13 @@ def compile_list_of_video_files(app_obj, video_obj, ignore_media_flag=False):
 
                 dummy_file, dummy_ext = os.path.splitext(video_obj.dummy_path)
                 main_path = dummy_file + '.' + ext
-                if main_path and os.path.isfile(main_path):
+                if os.path.isfile(main_path):
                     return_list.append(main_path)
 
         else:
 
             main_path = video_obj.get_default_path_by_ext(app_obj, ext)
-            if main_path and os.path.isfile(main_path):
+            if os.path.isfile(main_path):
                 return_list.append(main_path)
 
             else:
@@ -987,7 +987,7 @@ def compile_list_of_video_files(app_obj, video_obj, ignore_media_flag=False):
                     ext,
                 )
 
-                if subdir_path and os.path.isfile(subdir_path):
+                if os.path.isfile(subdir_path):
                     return_list.append(subdir_path)
 
     # (Thumbnails might be in one of two locations, so are handled separately)
@@ -2742,14 +2742,14 @@ def find_thumbnail_webp_strict(app_obj, video_obj):
     ext = '.webp'
 
     main_path = video_obj.get_actual_path_by_ext(app_obj, ext)
-    if main_path and os.path.isfile(main_path):
+    if os.path.isfile(main_path):
         return main_path
 
     subdir_path = video_obj.get_actual_path_in_subdirectory_by_ext(
         app_obj,
         ext,
     )
-    if subdir_path and os.path.isfile(subdir_path):
+    if os.path.isfile(subdir_path):
         return subdir_path
 
     # No webp thumbnail found

@@ -1642,14 +1642,14 @@ class OptionsParser(object):
 
         # Parse the comment options
         if (
-            copy_dict.get('check_fetch_comments', False) \
+            copy_dict['check_fetch_comments'] \
             and (
                 operation_type == 'sim' \
                 or operation_type == 'custom_sim' \
                 or operation_type == 'classic_sim'
             )
         ) or (
-            copy_dict.get('dl_fetch_comments', False) \
+            copy_dict['dl_fetch_comments'] \
             and (
                 operation_type == 'real' \
                 or operation_type == 'custom_real' \
