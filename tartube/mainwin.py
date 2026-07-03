@@ -19246,6 +19246,8 @@ class MainWin(Gtk.ApplicationWindow):
             if response == Gtk.ResponseType.NO:
                 # Replace existing files
                 self.app_obj.move_video_files_before_redownload(media_data_obj)
+                if hasattr(media_data_obj, 'downloaded_formats'):
+                    media_data_obj.downloaded_formats = []
             elif response == Gtk.ResponseType.YES:
                 # Keep existing files
                 if media_data_obj.dl_flag is True:
@@ -19254,7 +19256,7 @@ class MainWin(Gtk.ApplicationWindow):
                     else:
                         media_data_obj.set_dl_flag(False)
 
-        # Temporarily block usage of the archive file
+        # Temporarily block usage of the archive file unconditionally
         self.app_obj.set_block_ytdl_archive_flag(True)
 
         if download_manager_obj:
@@ -20681,6 +20683,8 @@ class MainWin(Gtk.ApplicationWindow):
             # Also mark the media.Video object as not downloaded (the download
             #   operation will not start otherwise)
             self.app_obj.move_video_files_before_redownload(media_data_obj)
+            if hasattr(media_data_obj, 'downloaded_formats'):
+                media_data_obj.downloaded_formats = []
         elif response == Gtk.ResponseType.YES:
             # Keep existing files
             # Do not move files away. Just mark as not downloaded.
@@ -20694,7 +20698,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   have created a ytdl_archive.txt, recording every video ever
         #   downloaded in the parent directory. This will prevent a successful
         #   re-downloading of the video
-        # Temporarily block usage of the archive file
+        # Temporarily block usage of the archive file unconditionally
         self.app_obj.set_block_ytdl_archive_flag(True)
 
         # Now we're ready to start the download operation
@@ -33295,6 +33299,50 @@ class AddStampDialogue(Gtk.Dialog):
         )
 
 
+class RedownloadOptionsDialogue(Gtk.Dialog):
+
+    """Prompt the user to specify what to do with existing files when
+    re-downloading one or more videos.
+    """
+
+    def __init__(self, main_win_obj):
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('mwn redownload_options_dialogue __init__')
+
+        self.main_win_obj = main_win_obj
+        self.choice = None
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Re-download video(s)'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+        )
+
+        self.add_button(_('Keep existing files'), Gtk.ResponseType.YES)
+        self.add_button(_('Replace existing files'), Gtk.ResponseType.NO)
+        self.add_button(_('Cancel'), Gtk.ResponseType.CANCEL)
+
+        self.set_modal(True)
+        app_obj = self.main_win_obj.app_obj
+
+        box = self.get_content_area()
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+        grid.set_column_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label.new(
+            _('What would you like to do with existing downloaded files?')
+        )
+        label.set_line_wrap(True)
+        label.set_max_width_chars(60)
+        grid.attach(label, 0, 0, 1, 1)
+
+        self.show_all()
+
+
 class AddVideoDialogue(Gtk.Dialog):
 
     """Called by mainapp.TartubeApp.on_menu_add_video().
@@ -33691,50 +33739,6 @@ class AddVideoDialogue(Gtk.Dialog):
 
         # Return 1 to keep the timer going
         return 1
-
-
-class RedownloadOptionsDialogue(Gtk.Dialog):
-
-    """Prompt the user to specify what to do with existing files when
-    re-downloading one or more videos.
-    """
-
-    def __init__(self, main_win_obj):
-        if DEBUG_FUNC_FLAG:
-            ttutils.debug_time('mwn redownload_options_dialogue __init__')
-
-        self.main_win_obj = main_win_obj
-        self.choice = None
-
-        Gtk.Dialog.__init__(
-            self,
-            _('Re-download video(s)'),
-            main_win_obj,
-            Gtk.DialogFlags.DESTROY_WITH_PARENT,
-        )
-
-        self.add_button(_('Keep existing files'), Gtk.ResponseType.YES)
-        self.add_button(_('Replace existing files'), Gtk.ResponseType.NO)
-        self.add_button(_('Cancel'), Gtk.ResponseType.CANCEL)
-
-        self.set_modal(True)
-        app_obj = self.main_win_obj.app_obj
-
-        box = self.get_content_area()
-        grid = Gtk.Grid()
-        box.add(grid)
-        grid.set_border_width(main_win_obj.spacing_size)
-        grid.set_row_spacing(main_win_obj.spacing_size)
-        grid.set_column_spacing(main_win_obj.spacing_size)
-
-        label = Gtk.Label.new(
-            _('What would you like to do with existing downloaded files?')
-        )
-        label.set_line_wrap(True)
-        label.set_max_width_chars(60)
-        grid.attach(label, 0, 0, 1, 1)
-
-        self.show_all()
 
 
 class ApplyOptionsDialogue(Gtk.Dialog):

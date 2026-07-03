@@ -2025,6 +2025,9 @@ class Video(GenericMedia):
         #   'en_US', 'live_chat')
         self.subs_list = []
 
+        # List of successfully downloaded format IDs (e.g. [{'id': '137', 'bitrate': 2345}, ...])
+        self.downloaded_formats = []
+
         # List of timestamps, extracted from the video's description and/or
         #   metadata, or added manually by the user
         # List in groups of three, in the form
